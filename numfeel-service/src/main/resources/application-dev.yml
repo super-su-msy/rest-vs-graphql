@@ -1,0 +1,26 @@
+spring:
+  graphql:
+    graphiql:
+      enabled: true
+  r2dbc:
+    url: r2dbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DB:demomockserver-dev}
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:}
+    pool:
+      initial-size: 1
+      max-size: 5
+      max-idle-time: 30m
+  sql:
+    init:
+      mode: never
+
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+    io.netty: WARN
+    io.r2dbc: WARN
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

@@ -1,0 +1,49 @@
+"REST vs GraphQL comparison demo - GraphQL type definitions"
+type Query {
+    "Query the book catalog. The meta field exposes DB call count, loaded rows, and latency for this request so server-side cost is visible."
+    books(limit: Int = 10): BookListResult!
+}
+
+type BookListResult {
+    books: [Book!]!
+    meta: CostMeta!
+}
+
+type CostMeta {
+    "Actual DB query count for this request. It rises with nested selections under the intentional N+1 model."
+    dbCalls: Int!
+    "Actual rows loaded by this request."
+    rowsLoaded: Int!
+    "Server-side processing latency in milliseconds."
+    elapsedMs: Int!
+}
+
+type Book {
+    id: ID!
+    title: String!
+    author: Author!
+    isbn: String
+    category: String
+    price: Float!
+    rating: Float!
+    pages: Int
+    stock: Int
+    publishedYear: Int
+    description: String
+    "Selecting reviews triggers one query per book, intentionally demonstrating N+1 cost growth."
+    reviews: [Review!]
+}
+
+type Author {
+    id: ID!
+    name: String!
+    country: String!
+    bio: String
+}
+
+type Review {
+    id: ID!
+    rating: Int!
+    content: String!
+    reviewer: String!
+}

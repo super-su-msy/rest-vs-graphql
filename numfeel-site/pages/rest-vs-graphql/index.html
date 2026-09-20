@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="One bookstore ranking page, three API styles: full REST, slim REST, and GraphQL. Compare response bytes, browser caching, and server-side SQL cost to see why GraphQL fetches precisely and why REST still remains mainstream.">
+  <title>REST vs GraphQL: Why Precise Fetching Still Does Not Automatically Win</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+
+    <div class="header">
+      <h1>REST vs GraphQL</h1>
+      <p>Think like a frontend developer for a moment: build a bookstore ranking page that displays 4 business fields plus an ID. Follow steps 1-4 and let the numbers make the trade-off visible.</p>
+    </div>
+
+    <nav class="guide" aria-label="Demo steps">
+      <a class="guide-step active" href="#exp-1" data-target="exp-1"><b>1</b> Precise Fetching</a>
+      <a class="guide-step" href="#exp-2" data-target="exp-2"><b>2</b> Cache Advantage</a>
+      <a class="guide-step" href="#exp-3" data-target="exp-3"><b>3</b> Cost Explosion</a>
+      <a class="guide-step" href="#balance" data-target="balance"><b>4</b> Conclusion</a>
+    </nav>
+
+    <!-- Experiment 1: Fetching trade-off -->
+    <div class="card" id="exp-1">
+      <div class="card-title">
+        <span class="step-badge">01</span> The UI displays 4 business fields, but one API sends 11
+      </div>
+      <div class="card-desc">The ranking page displays <b>title, author, rating, and price</b>, with ID kept as the list key. What does each API return?<br>Then toggle <b>description</b> and see what happens when the UI asks for one more field.</div>
+
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="phone-header">Bookstore · Ranking List</div>
+          <div class="field-picker" id="field-picker">
+            <label class="field-chip"><input type="checkbox" value="title" checked disabled> Title</label>
+            <label class="field-chip"><input type="checkbox" value="author" checked disabled> Author</label>
+            <label class="field-chip"><input type="checkbox" value="rating" checked disabled> Rating</label>
+            <label class="field-chip"><input type="checkbox" value="price" checked disabled> Price</label>
+            <label class="field-chip"><input type="checkbox" value="id" checked disabled> ID</label>
+            <label class="field-chip chip-primary" id="chip-description"><input type="checkbox" value="description" id="ck-description"> Description <span class="chip-hint">try it</span></label>
+          </div>
+          <div class="phone-sub">Card display: title, author, rating, price. ID is kept as a technical field.</div>
+          <div class="phone-list" id="phone-list">Loading...</div>
+        </div>
+
+        <div class="vs-panel">
+          <div class="vs-legend">
+            <span class="legend-dot used"></span> Used by page <span class="legend-dot waste"></span> Extra fields
+          </div>
+          <div class="vs-row" id="vs-rest">
+            <div class="vs-head">REST Full Payload <span class="vs-url">GET /catalog/full</span></div>
+            <div class="vs-stats">
+              <span class="stat-val" id="vs-rest-size">-</span>
+              <span class="stat-lbl">Response bytes</span>
+              <span class="stat-val" id="vs-rest-waste">-</span>
+              <span class="stat-lbl">Waste</span>
+            </div>
+            <pre class="vs-json" id="vs-rest-json">Requesting...</pre>
+          </div>
+          <div class="vs-row" id="vs-light">
+            <div class="vs-head">REST Slim Endpoint <span class="vs-url">GET /catalog/light</span></div>
+            <div class="vs-stats">
+              <span class="stat-val" id="vs-light-size">-</span>
+              <span class="stat-lbl">Response bytes</span>
+              <span class="stat-val" id="vs-light-waste">-</span>
+              <span class="stat-lbl">Waste</span>
+            </div>
+            <pre class="vs-json" id="vs-light-json">Requesting...</pre>
+          </div>
+          <div class="vs-row" id="vs-gql">
+            <div class="vs-head">GraphQL Selection <span class="vs-url">POST /graphql</span></div>
+            <div class="vs-stats">
+              <span class="stat-val" id="vs-gql-size">-</span>
+              <span class="stat-lbl">Response bytes</span>
+              <span class="stat-val" id="vs-gql-waste">-</span>
+              <span class="stat-lbl">Waste</span>
+            </div>
+            <pre class="vs-json" id="vs-gql-json">Requesting...</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-bar" id="exp1-insight"></div>
+    </div>
+
+    <!-- Experiment 2: Cache race -->
+    <div class="card" id="exp-2">
+      <div class="card-title">
+        <span class="step-badge">02</span> Refresh 10 times and watch GET reuse cache
+      </div>
+      <div class="card-desc">REST uses GET, so the browser can cache it automatically. GraphQL uses POST, so each request pays full price.<br>Click the button to compare the cumulative cost over 10 attempts.</div>
+
+      <div class="bench-controls">
+        <button class="btn btn-primary" id="btn-bench" type="button"><i class="ti ti-refresh"></i> Run 10 Refreshes</button>
+        <span class="hint" id="bench-status"></span>
+      </div>
+      <div class="bench-table-wrap">
+        <table class="bench-table">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>REST Full Payload</th>
+              <th>REST Slim Endpoint</th>
+              <th>GraphQL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>First request</td><td id="b-first-rest">-</td><td id="b-first-light">-</td><td id="b-first-gql">-</td></tr>
+            <tr><td>Average from request 2 onward</td><td id="b-avg-rest">-</td><td id="b-avg-light">-</td><td id="b-avg-gql">-</td></tr>
+            <tr><td>10-request total</td><td id="b-total-rest">-</td><td id="b-total-light">-</td><td id="b-total-gql">-</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="insight-bar" id="exp2-insight"></div>
+    </div>
+
+    <!-- Experiment 3: Query cost explosion -->
+    <div class="card" id="exp-3">
+      <div class="card-title">
+        <span class="step-badge">03</span> Increase the limit and server cost explodes
+      </div>
+      <div class="card-desc">GraphQL lets the client choose nested fields. Drag the limit to <b>100</b>, select <b>author + reviews</b>, then click <b>Run Once</b> to see how many SQL calls the server really performs.</div>
+
+      <div class="gql-ctrl">
+        <label>limit
+          <input type="range" id="gql-limit" min="1" max="100" value="10">
+          <span class="gql-limit-val" id="gql-limit-val">10</span>
+        </label>
+        <label class="check"><input type="checkbox" id="gql-author" checked> Request author</label>
+        <label class="check"><input type="checkbox" id="gql-reviews" checked> Request reviews</label>
+        <button class="btn btn-primary" id="btn-gql-run" type="button"><i class="ti ti-play"></i> Run Once</button>
+      </div>
+
+      <div class="cost-grid">
+        <div class="cost-item">
+          <div class="cost-num" id="cost-dbcalls">-</div>
+          <div class="cost-lbl">Server SQL calls</div>
+        </div>
+        <div class="cost-item">
+          <div class="cost-num" id="cost-rows">-</div>
+          <div class="cost-lbl">Rows loaded</div>
+        </div>
+        <div class="cost-item">
+          <div class="cost-num" id="cost-ms">-</div>
+          <div class="cost-lbl">Server latency ms</div>
+        </div>
+      </div>
+
+      <div class="pred-row">
+        <span class="hint">Theoretical prediction (N+1 model):</span>
+        <span id="pred-text">-</span>
+      </div>
+      <div class="insight-bar" id="exp3-insight"></div>
+    </div>
+
+    <!-- Final comparison -->
+    <div class="card balance" id="balance">
+      <div class="card-title"><span class="step-badge">04</span> Conclusion: Why REST Still Remains Mainstream</div>
+      <div class="balance-row">
+        <div class="balance-side">
+          <div class="balance-tag green">GraphQL</div>
+          <ul>
+            <li>Client-controlled precise fetching can reduce payload size</li>
+            <li>Nested data can be retrieved in one request</li>
+            <li>Trade-off: server-side cost can become unbounded</li>
+          </ul>
+        </div>
+        <div class="balance-mid">=</div>
+        <div class="balance-side">
+          <div class="balance-tag gold">REST</div>
+          <ul>
+            <li>Endpoints are contracts with predictable cost</li>
+            <li>GET is naturally cacheable and idempotent</li>
+            <li>Trade-off: extra fields can appear unless endpoints are designed carefully</li>
+          </ul>
+        </div>
+      </div>
+      <p class="balance-conclusion">GraphQL moves complexity from the client into the server. For a public API, <b>the server pays for that flexibility</b>. A common compromise is GraphQL inside a BFF and REST at the public boundary.</p>
+    </div>
+
+    <div class="footer-note">
+      Data comes from the live Java backend <code>numfeel-service</code>: 200 authors, 10,000 books, and about 25,000 reviews. Open DevTools to verify response headers, payload size, and SQL-cost metadata.
+    </div>
+
+  </div>
+  <script src="../../components/header.js" defer></script>
+  <script src="engine.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
