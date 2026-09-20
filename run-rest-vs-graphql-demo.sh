@@ -4,6 +4,39 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT_DIR/numfeel-service"
 
+usage() {
+  cat <<'EOF'
+Usage: ./run-rest-vs-graphql-demo.sh [NAME=VALUE ...]
+
+Settings are environment variables. Pass them either as a command prefix or as
+NAME=VALUE arguments:
+
+  START_MYSQL=1 ./run-rest-vs-graphql-demo.sh
+  ./run-rest-vs-graphql-demo.sh START_MYSQL=1
+
+Supported names:
+  START_MYSQL, MYSQL_HOST, MYSQL_PORT, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DB,
+  MYSQL_CONTAINER_NAME, SPRING_PROFILES_ACTIVE
+EOF
+}
+
+# Accept NAME=VALUE arguments so "./run-... START_MYSQL=1" cannot be silently ignored.
+for arg in "$@"; do
+  if [[ "$arg" == "-h" || "$arg" == "--help" ]]; then
+    usage
+    exit 0
+  fi
+  if [[ ! "$arg" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]]; then
+    echo "Unexpected argument: $arg" >&2
+    echo "Settings must use NAME=VALUE form; a bare word such as START_MYSQL is not accepted." >&2
+    echo >&2
+    usage >&2
+    exit 1
+  fi
+  export "$arg"
+  echo "Applied argument setting: ${arg%%=*}"
+done
+
 echo "Starting REST vs GraphQL demo on http://localhost:8080/pages/rest-vs-graphql/"
 echo
 echo "Requires Java 25 and MySQL. Override DB settings with MYSQL_HOST, MYSQL_PORT, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DB."

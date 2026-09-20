@@ -16,6 +16,17 @@ If local MySQL is not running:
 START_MYSQL=1 ./run-rest-vs-graphql-demo.sh
 ```
 
+Settings are environment variables, so they go in front of the command. The same value also
+works as a `NAME=VALUE` argument: `./run-rest-vs-graphql-demo.sh START_MYSQL=1`. A bare
+`START_MYSQL` without `=1` is rejected instead of being silently ignored.
+
+Verify the demo is up:
+
+```bash
+curl -s http://localhost:8080/api/rest-vs-graphql/status
+# {"status":200,"data":{"dataReady":true,"authors":200,"books":10000,"reviews":25054}}
+```
+
 The script uses Java 25, starts or reuses the `numfeel-demo-mysql` container, creates the demo database, and lets Spring create and seed the bookstore tables on startup.
 
 ## Structure
