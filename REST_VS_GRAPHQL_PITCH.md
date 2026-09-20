@@ -97,6 +97,15 @@ START_MYSQL=1 ./run-rest-vs-graphql-demo.sh
 
 This starts/reuses a `numfeel-demo-mysql` container, creates the demo database, then starts Spring. The app creates the bookstore tables and seeds the demo data on startup.
 
+### Live request and SQL logging
+
+The `dev` profile enables two DEBUG loggers so the numbers on the page can be verified in the console:
+
+- `org.springframework.web.server.adapter.HttpWebHandlerAdapter` - one line per HTTP request, with the request ID that links a request to its completion line.
+- `org.springframework.r2dbc.core` - every SQL statement the server executes, including the N+1 queries behind nested GraphQL selections.
+
+For the step 3 query (`limit=10`, author + reviews) you can count 21 `Executing SQL statement` lines, matching the `Server SQL calls` panel. The step 2 benchmark issues 10 requests per endpoint, so that single click produces a burst of lines; use a dedicated terminal for it, or drop the two loggers for a quiet run.
+
 Local frontend against local Spring API with a separate static server:
 
 ```text

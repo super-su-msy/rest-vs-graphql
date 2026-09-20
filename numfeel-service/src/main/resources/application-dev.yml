@@ -20,6 +20,12 @@ server:
 logging:
   level:
     root: INFO
+    # Demo talk-through logging, kept in the dev profile only so the default profile stays quiet.
+    # HttpWebHandlerAdapter logs one line per HTTP request plus its completion status.
+    # org.springframework.r2dbc.core logs every SQL statement the server executes, which makes the
+    # SQL-call counts shown in the UI verifiable in the console. Remove both lines for a quiet run.
+    org.springframework.web.server.adapter.HttpWebHandlerAdapter: DEBUG
+    org.springframework.r2dbc.core: DEBUG
     io.netty: WARN
     io.r2dbc: WARN
   pattern:
