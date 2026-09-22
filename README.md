@@ -34,4 +34,5 @@ The script uses Java 25, starts or reuses the `numfeel-demo-mysql` container, cr
 - `numfeel-service/` - Spring Boot WebFlux + Spring GraphQL backend
 - `numfeel-site/pages/rest-vs-graphql/` - static frontend demo page
 - `REST_VS_GRAPHQL_PITCH.md` - pitch notes and runbook
+- `PITCH_ONE_PAGER.html` - print-ready handout; its content is sized to the top half of a Letter sheet (`PITCH_ONE_PAGER.pdf` is the same thing pre-rendered)
 - `run-rest-vs-graphql-demo.sh` - single-process local demo launcher
