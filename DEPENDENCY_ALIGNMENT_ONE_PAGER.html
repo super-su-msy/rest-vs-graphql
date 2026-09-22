@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dependency Version Alignment - Pitch One-Pager</title>
+<style>
+  @page { size: letter portrait; margin: 0.5in; }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  /* 7.5in = printable width of a Letter sheet at 0.5in margins, so the sheet is
+     7.5in x 10in and half of it is 5in tall. This document is deliberately sized
+     to land inside that top half. */
+  body {
+    width: 7.5in;
+    font: 6.2pt/1.15 "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #111;
+    background: #fff;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  header { border-bottom: 1.5pt solid #111; padding-bottom: 2pt; margin-bottom: 3.5pt; }
+  h1 { font-size: 11pt; line-height: 1.05; margin: 0 0 1.5pt; letter-spacing: -.2pt; }
+  h1 small { font-size: 6.4pt; font-weight: 400; color: #555; letter-spacing: 0; }
+  .thesis { margin: 1.8pt 0 0; font-size: 6.6pt; line-height: 1.22; }
+  .thesis b { background: #ffef9f; padding: 0 1pt; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: .18in; }
+  section { break-inside: avoid; margin-bottom: 2.2pt; }
+
+  h2 {
+    font-size: 6pt; text-transform: uppercase; letter-spacing: .45pt;
+    color: #444; margin: 0 0 1.2pt; padding-bottom: .8pt; border-bottom: .5pt solid #ccc;
+  }
+  p { margin: 0 0 1.2pt; }
+  ul { margin: 0; padding-left: 7pt; }
+  li { margin-bottom: .6pt; }
+  b.hot { color: #b3261e; }
+  b.cool { color: #1a6b33; }
+
+  code, pre { font-family: Menlo, Consolas, monospace; font-size: 5.6pt; }
+  pre {
+    margin: 1.5pt 0; padding: 2pt 2.5pt; background: #f5f5f6;
+    border-left: 1.5pt solid #bbb; white-space: pre; overflow: hidden; line-height: 1.18;
+  }
+  code { background: #f5f5f6; padding: 0 1pt; }
+
+  table { width: 100%; border-collapse: collapse; margin: 1.5pt 0; font-size: 5.9pt; }
+  th, td { text-align: left; padding: .7pt 2.5pt; border-bottom: .5pt solid #e2e2e2; vertical-align: top; }
+  th { background: #f0f0f1; font-weight: 600; }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .kv td:first-child { color: #555; width: 30%; }
+  .footer {
+    border-top: .5pt solid #ccc; margin-top: 3pt; padding-top: 2pt;
+    font-size: 5.8pt; color: #555;
+  }
+  #probe { position: absolute; left: -9999pt; top: 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Dependency Version Alignment <small>version catalog + platform (BOM) &middot; pitch revamp &middot; target repo is <b>Maven</b>, not Gradle</small></h1>
+  <p class="thesis">One file says <b>what</b> dependencies exist, one says <b>which versions</b> are legal, and modules declare <b>names only</b>. So the pitch is not the tool &mdash; it is <b>buy the cheapest level that removes version drift</b>.</p>
+</header>
+
+<div class="grid">
+
+  <div>
+    <section>
+      <h2>01 &middot; The goal, and who owns what</h2>
+      <table class="kv">
+        <tr><td>Version catalog</td><td><b>What exists</b> &mdash; names, bundles, plugin ids</td></tr>
+        <tr><td>Platform / BOM</td><td><b>Which versions are legal</b> &mdash; alignment + constraints</td></tr>
+        <tr><td>Modules</td><td><b>Names only</b> &mdash; a version here overrides the platform</td></tr>
+      </table>
+      <p>The catalog is your API. The platform is your policy. Neither is a lockfile.</p>
+    </section>
+
+    <section>
+      <h2>02 &middot; Where this repo already stands</h2>
+      <ul>
+        <li><b>Maven-only:</b> <code>pom.xml</code> + <code>mvnw</code>. Zero Gradle files, so this is a build-system migration, not a config tweak.</li>
+        <li>It inherits <code>spring-boot-starter-parent 4.0.6</code>, so the Boot BOM is <b>already imported</b> and every Boot dependency carries <b>no version</b>.</li>
+        <li>The only two unmanaged deps are pinned once in <code>&lt;properties&gt;</code>: <code>r2dbc-mysql 1.4.2</code>, <code>datafaker 2.4.2</code>.</li>
+        <li>Net: the stated goal is <b class="cool">already met at single-module scale</b>.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>03 &middot; Cost ladder &mdash; buy only what you need</h2>
+      <table>
+        <tr><th>Level</th><th>Setup</th><th>Adopt when</th></tr>
+        <tr><td>L0</td><td>Single module + parent POM (this repo)</td><td>Always &mdash; free</td></tr>
+        <tr><td>L1</td><td>Multi-module Maven: parent + <code>&lt;modules&gt;</code></td><td>2+ deployables</td></tr>
+        <tr><td>L2</td><td>Gradle: catalog + <code>java-platform</code> + convention plugin + lockfile</td><td>2+ apps/teams sharing libs</td></tr>
+      </table>
+      <p>A four-module Gradle build for one focused demo is structure the problem lacks.</p>
+    </section>
+
+    <section>
+      <h2>04 &middot; Maven equivalent (already in place here)</h2>
+      <pre>&lt;!-- parent POM: the BOM is the "platform", properties are the "catalog" --&gt;
+&lt;dependencyManagement&gt;&lt;dependencies&gt;&lt;dependency&gt;
+  &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+  &lt;artifactId&gt;spring-boot-dependencies&lt;/artifactId&gt;
+  &lt;version&gt;${spring-boot.version}&lt;/version&gt;
+  &lt;type&gt;pom&lt;/type&gt;&lt;scope&gt;import&lt;/scope&gt;
+&lt;/dependency&gt;&lt;/dependencies&gt;&lt;/dependencyManagement&gt;</pre>
+      <p>Maven has no version catalog; the parent POM plus properties play that role, and this repo already gets it free from <code>spring-boot-starter-parent</code>. The honest pitch is <b>nothing to migrate</b> unless you actually need modules.</p>
+    </section>
+
+    <section>
+      <h2>05 &middot; Recommendation</h2>
+      <p>Stay on Maven here, and close the real gap instead: add a drift guard (<code>maven-enforcer</code> <code>dependencyConvergence</code>) and <code>versions-maven-plugin</code> for upgrade prompts. Revisit the catalog/platform setup only when the build actually goes multi-module &mdash; that is the moment it earns its keep.</p>
+    </section>
+  </div>
+
+  <div>
+    <section>
+      <h2>06 &middot; Revamp: what to fix in the draft</h2>
+      <ul>
+        <li><b>No repositories declared</b> &rarr; the build fails; add <code>mavenCentral()</code> in <code>settings.gradle</code>.</li>
+        <li><b>Plugin version hardcoded in the module</b> &rarr; move it to <code>[plugins]</code> and apply <code>alias(...)</code>; also kills the dead <code>[versions]</code> entry.</li>
+        <li><b><code>junit = 5.10.0</code> as a constraint</b> &rarr; the Boot BOM manages higher and Gradle keeps the highest, so the pin silently loses. Use <code>version { strictly ... }</code>.</li>
+        <li><b><code>shared</code> uses <code>implementation</code> for a Spring type in its API</b> &rarr; use <code>api</code>, or consumers cannot see it.</li>
+        <li><b>&ldquo;BOM &asymp; package-lock.json&rdquo;</b> &rarr; a BOM is constraints; the real lockfile is <code>dependencyLocking</code> + <code>gradle.lockfile</code>.</li>
+        <li><b><code>platform(project(':platform'))</code> per module</b> &rarr; a convention plugin in <code>build-logic</code> so it cannot be forgotten.</li>
+        <li><b>Pins Boot 3.2.0, uses <code>allowDependencies()</code></b> &rarr; pin the 4.0.6 you run; <code>allowDependencies()</code> is unneeded for constraints-only.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>07 &middot; Corrected core (only what changes)</h2>
+      <pre># gradle/libs.versions.toml
+[versions]
+spring-boot = "4.0.6"
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+[libraries]
+web = { module = "org.springframework.boot:spring-boot-starter-web" }
+
+// settings.gradle -- the draft declared no repositories at all
+dependencyResolutionManagement { repositories { mavenCentral() } }</pre>
+      <pre>// platform/build.gradle -- constraints only, so no allowDependencies()
+plugins { id 'java-platform' }
+dependencies { api platform('org.springframework.boot:spring-boot-dependencies:4.0.6') }
+
+// backend/build.gradle -- names only, versions live above
+plugins { alias(libs.plugins.spring.boot); id 'java' }
+dependencies {
+    implementation platform(project(':platform'))  // omit and resolution fails
+    implementation project(':shared'); implementation libs.web
+}</pre>
+    </section>
+
+    <section>
+      <h2>08 &middot; Where the upgrade actually pays off</h2>
+      <ul>
+        <li><b>Convention plugin</b> in <code>build-logic</code>: every module inherits the platform, catalog and test setup, so the BOM line cannot be forgotten.</li>
+        <li><b><code>dependencyLocking</code></b> + <code>gradle.lockfile</code>: the reproducibility the draft claims the BOM gives you.</li>
+        <li><b>CI guard:</b> <code>./gradlew dependencies --write-locks</code>, then fail the build on drift.</li>
+      </ul>
+    </section>
+  </div>
+
+</div>
+
+<p class="footer">
+  Verified against the target repo, not assumed: it is Maven-only (<code>pom.xml</code> + <code>mvnw</code>, no Gradle files anywhere), it inherits <code>spring-boot-starter-parent 4.0.6</code>, and its only pinned third-party versions are <code>r2dbc-mysql 1.4.2</code> and <code>datafaker 2.4.2</code>.
+</p>
+
+<div id="probe"></div>
+<script>
+  // Self-measurement so the layout can be verified without opening a browser: writes the rendered
+  // content height to #probe. 5in is exactly half of a Letter sheet at 0.5in margins.
+  window.addEventListener('load', function () {
+    var total = document.body.getBoundingClientRect().height;
+    var cols = document.querySelectorAll('.grid > div');
+    var natural = [];
+    for (var i = 0; i < cols.length; i++) {
+      var box = cols[i].getBoundingClientRect();
+      var kids = cols[i].querySelectorAll('section');
+      var last = kids[kids.length - 1].getBoundingClientRect();
+      natural.push(Math.round(last.bottom - box.top));
+    }
+    document.getElementById('probe').textContent =
+      'MEASURE total=' + Math.round(total) + 'px/' + (total / 96).toFixed(2) + 'in' +
+      ' naturalLeft=' + natural[0] + 'px naturalRight=' + natural[1] + 'px' +
+      ' HALF_PAGE=' + (total / 96 <= 5 ? 'YES' : 'NO');
+  });
+</script>
+</body>
+</html>
